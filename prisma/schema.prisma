@@ -1,0 +1,552 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  TEACHER
+  PARENT
+  ADMIN
+  COUNSELOR
+}
+
+enum AssignmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum SubmissionStatus {
+  PENDING
+  SUBMITTED
+  GRADED
+  LATE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum MoodLevel {
+  VERY_LOW
+  LOW
+  NEUTRAL
+  GOOD
+  EXCELLENT
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RecommendationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAUSED
+  IMPLEMENTED
+}
+
+enum AgentType {
+  SCOUT
+  TUTOR
+  GUARDIAN
+  TEACHER
+}
+
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  AI_QUERY
+}
+
+model School {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  address     String?
+  county      String?
+  country     String   @default("Kenya")
+  phone       String?
+  email       String?
+  logoUrl     String?
+  curriculum  String   @default("CBC")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  classes     Class[]
+  subjects    Subject[]
+  auditLogs   AuditLog[]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  firstName     String
+  lastName      String
+  phone         String?
+  avatarUrl     String?
+  role          UserRole
+  schoolId      String?
+  isActive      Boolean   @default(true)
+  emailVerified Boolean   @default(false)
+  lastLoginAt   DateTime?
+  oauthProvider String?
+  oauthId       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  school        School?   @relation(fields: [schoolId], references: [id])
+  student       Student?
+  teacher       Teacher?
+  parent        Parent?
+  counselor     Counselor?
+  auditLogs     AuditLog[]
+  refreshTokens RefreshToken[]
+  sentMessages  Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+
+  @@index([schoolId, role])
+  @@index([email])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Student {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  admissionNumber String   @unique
+  gradeLevel      String
+  dateOfBirth     DateTime?
+  interests       Json     @default("[]")
+  strengths       Json     @default("[]")
+  careerGoals     Json     @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments       Enrollment[]
+  submissions       AssignmentSubmission[]
+  grades            Grade[]
+  attendance        Attendance[]
+  moodCheckIns      MoodCheckIn[]
+  studyPlans        StudyPlan[]
+  tutorSessions     TutorSession[]
+  riskAssessments   RiskAssessment[]
+  aiRecommendations AIRecommendation[]
+  careerProfile     CareerProfile?
+  parentLinks       ParentStudent[]
+}
+
+model Teacher {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  employeeId    String   @unique
+  department    String?
+  qualifications String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classSubjects ClassSubject[]
+  assignments   Assignment[]
+  lessonPlans   LessonPlan[]
+  approvedRecommendations AIRecommendation[] @relation("ApprovedBy")
+}
+
+model Parent {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  occupation String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  children ParentStudent[]
+}
+
+model ParentStudent {
+  id        String   @id @default(cuid())
+  parentId  String
+  studentId String
+  relation  String   @default("parent")
+  createdAt DateTime @default(now())
+
+  parent  Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+}
+
+model Counselor {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  licenseNo String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  escalations       WellbeingAlert[]
+}
+
+model Class {
+  id          String   @id @default(cuid())
+  schoolId    String
+  name        String
+  gradeLevel  String
+  academicYear String
+  room        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school      School         @relation(fields: [schoolId], references: [id])
+  enrollments Enrollment[]
+  classSubjects ClassSubject[]
+  attendance  Attendance[]
+
+  @@unique([schoolId, name, academicYear])
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  schoolId    String
+  name        String
+  code        String
+  description String?
+  curriculum  String   @default("CBC")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school        School         @relation(fields: [schoolId], references: [id])
+  classSubjects ClassSubject[]
+  materials     LearningMaterial[]
+
+  @@unique([schoolId, code])
+}
+
+model ClassSubject {
+  id        String   @id @default(cuid())
+  classId   String
+  subjectId String
+  teacherId String
+  createdAt DateTime @default(now())
+
+  class       Class        @relation(fields: [classId], references: [id])
+  subject     Subject      @relation(fields: [subjectId], references: [id])
+  teacher     Teacher      @relation(fields: [teacherId], references: [id])
+  assignments Assignment[]
+  lessonPlans LessonPlan[]
+
+  @@unique([classId, subjectId])
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  studentId String
+  classId   String
+  enrolledAt DateTime @default(now())
+  isActive  Boolean  @default(true)
+
+  student Student @relation(fields: [studentId], references: [id])
+  class   Class   @relation(fields: [classId], references: [id])
+
+  @@unique([studentId, classId])
+}
+
+model LearningMaterial {
+  id          String   @id @default(cuid())
+  subjectId   String
+  title       String
+  description String?
+  contentUrl  String?
+  contentText String?
+  type        String   @default("document")
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subject Subject @relation(fields: [subjectId], references: [id])
+}
+
+model Assignment {
+  id              String           @id @default(cuid())
+  classSubjectId  String
+  teacherId       String
+  title           String
+  description     String?
+  dueDate         DateTime
+  maxScore        Float            @default(100)
+  status          AssignmentStatus @default(DRAFT)
+  aiGenerated     Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  classSubject ClassSubject           @relation(fields: [classSubjectId], references: [id])
+  teacher      Teacher                @relation(fields: [teacherId], references: [id])
+  submissions  AssignmentSubmission[]
+}
+
+model AssignmentSubmission {
+  id           String           @id @default(cuid())
+  assignmentId String
+  studentId    String
+  content      String?
+  fileUrl      String?
+  status       SubmissionStatus @default(PENDING)
+  submittedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  student    Student    @relation(fields: [studentId], references: [id])
+  grade      Grade?
+
+  @@unique([assignmentId, studentId])
+}
+
+model Grade {
+  id           String   @id @default(cuid())
+  submissionId String   @unique
+  studentId    String
+  score        Float
+  maxScore     Float
+  feedback     String?
+  gradedBy     String?
+  gradedAt     DateTime @default(now())
+
+  submission AssignmentSubmission @relation(fields: [submissionId], references: [id])
+  student    Student              @relation(fields: [studentId], references: [id])
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  studentId String
+  classId   String
+  date      DateTime
+  status    AttendanceStatus
+  notes     String?
+  recordedBy String?
+  createdAt DateTime         @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+  class   Class   @relation(fields: [classId], references: [id])
+
+  @@unique([studentId, classId, date])
+}
+
+model MoodCheckIn {
+  id          String    @id @default(cuid())
+  studentId   String
+  moodLevel   MoodLevel
+  stress      Int       @default(0)
+  anxiety     Int       @default(0)
+  energy      Int       @default(5)
+  notes       String?
+  aiAnalysis  Json?
+  createdAt   DateTime  @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+  alerts  WellbeingAlert[]
+
+  @@index([studentId, createdAt])
+}
+
+model WellbeingAlert {
+  id            String    @id @default(cuid())
+  moodCheckInId String
+  counselorId   String?
+  riskLevel     RiskLevel
+  concern       String
+  recommendation String?
+  isResolved    Boolean   @default(false)
+  resolvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  moodCheckIn MoodCheckIn @relation(fields: [moodCheckInId], references: [id])
+  counselor   Counselor?  @relation(fields: [counselorId], references: [id])
+}
+
+model StudyPlan {
+  id          String   @id @default(cuid())
+  studentId   String
+  title       String
+  description String?
+  subjects    Json     @default("[]")
+  schedule    Json
+  goals       Json     @default("[]")
+  aiGenerated Boolean  @default(true)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+}
+
+model TutorSession {
+  id        String   @id @default(cuid())
+  studentId String
+  subject   String?
+  messages  Json
+  summary   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+}
+
+model RiskAssessment {
+  id              String    @id @default(cuid())
+  studentId       String
+  failureRisk     Float
+  dropoutRisk     Float
+  learningGaps    Json     @default("[]")
+  factors         Json
+  riskLevel       RiskLevel
+  agentType       AgentType @default(SCOUT)
+  createdAt       DateTime  @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId, createdAt])
+}
+
+model AIRecommendation {
+  id              String               @id @default(cuid())
+  studentId       String
+  agentType       AgentType
+  type            String
+  title           String
+  description     String
+  priority        RiskLevel            @default(MEDIUM)
+  status          RecommendationStatus @default(PENDING)
+  metadata        Json?
+  approvedById    String?
+  approvedAt      DateTime?
+  rejectedReason  String?
+  pausedByGuardian Boolean             @default(false)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  student    Student  @relation(fields: [studentId], references: [id])
+  approvedBy Teacher? @relation("ApprovedBy", fields: [approvedById], references: [id])
+
+  @@index([studentId, status])
+}
+
+model CareerProfile {
+  id                  String   @id @default(cuid())
+  studentId           String   @unique
+  recommendedCareers  Json
+  recommendedUniversities Json?
+  tvetOpportunities   Json?
+  scholarships        Json?
+  entrepreneurship    Json?
+  lastUpdated         DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+}
+
+model LessonPlan {
+  id             String   @id @default(cuid())
+  classSubjectId String
+  teacherId      String
+  title          String
+  objectives     Json     @default("[]")
+  content        String
+  duration       Int
+  aiGenerated    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  classSubject ClassSubject @relation(fields: [classSubjectId], references: [id])
+  teacher      Teacher      @relation(fields: [teacherId], references: [id])
+}
+
+model ParentReport {
+  id          String   @id @default(cuid())
+  parentId    String
+  studentId   String
+  weekStart   DateTime
+  weekEnd     DateTime
+  content     Json
+  summary     String
+  aiGenerated Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([parentId, weekStart])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  subject    String?
+  body       String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@index([receiverId, isRead])
+}
+
+model KnowledgeDocument {
+  id          String   @id @default(cuid())
+  schoolId    String?
+  title       String
+  content     String
+  subject     String?
+  curriculum  String   @default("CBC")
+  embedding   String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String?
+  schoolId  String?
+  action    AuditAction
+  resource  String
+  resourceId String?
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id])
+  school School? @relation(fields: [schoolId], references: [id])
+
+  @@index([schoolId, createdAt])
+  @@index([userId, createdAt])
+}
