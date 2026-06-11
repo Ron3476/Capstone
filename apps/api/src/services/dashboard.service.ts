@@ -35,7 +35,7 @@ export class DashboardService {
 
     const averageGrade =
       grades.length > 0
-        ? (grades.reduce((s, g) => s + (g.score / g.maxScore) * 100, 0) / grades.length)
+        ? (grades.reduce((s: number, g) => s + (g.score / g.maxScore) * 100, 0) / grades.length)
         : 72;
 
     return {
@@ -66,20 +66,20 @@ export class DashboardService {
 
     const avgScore =
       grades.length > 0
-        ? grades.reduce((s, g) => s + g.score / g.maxScore, 0) / grades.length
+        ? grades.reduce((s: number, g) => s + g.score / g.maxScore, 0) / grades.length
         : 0;
 
-    const presentDays = attendance.filter((a) => a.status === 'PRESENT').length;
+    const presentDays = attendance.filter((a: any) => a.status === 'PRESENT').length;
     const attendanceRate = attendance.length > 0 ? presentDays / attendance.length : 1;
 
-    const pendingAssignments = submissions.filter((s) => s.status === 'PENDING').length;
+    const pendingAssignments = submissions.filter((s: any) => s.status === 'PENDING').length;
 
     return {
       averageScore: Math.round(avgScore * 100),
       attendanceRate: Math.round(attendanceRate * 100),
       pendingAssignments,
       recentGrades: grades,
-      upcomingAssignments: submissions.filter((s) => s.status === 'PENDING'),
+      upcomingAssignments: submissions.filter((s: any) => s.status === 'PENDING'),
       studyPlans,
       moodTrend: moodCheckIns,
       careerProfile,
@@ -104,7 +104,8 @@ export class DashboardService {
       (sum: number, cs: any) =>
         sum +
         cs.assignments.reduce(
-          (a: number, asn: any) => a + asn.submissions.filter((s: any) => s.status === 'SUBMITTED').length,
+          (a: number, asn: any) =>
+            a + asn.submissions.filter((s: any) => s.status === 'SUBMITTED').length,
           0
         ),
       0
