@@ -75,22 +75,22 @@ export class ScoutAgent {
       prisma.moodCheckIn.findMany({ where: { studentId, createdAt: { gte: thirtyDaysAgo } } }),
     ]);
 
-    const presentCount = attendance.filter((a) => a.status === 'PRESENT').length;
+    const presentCount = attendance.filter((a: any) => a.status === 'PRESENT').length;
     const attendanceRate = attendance.length > 0 ? presentCount / attendance.length : 1;
 
     const averageGrade =
       grades.length > 0
-        ? grades.reduce((sum, g) => sum + g.score / g.maxScore, 0) / grades.length
+        ? grades.reduce((sum: number, g: any) => sum + g.score / g.maxScore, 0) / grades.length
         : 0.7;
 
-    const completedSubmissions = submissions.filter((s) => s.status !== 'PENDING').length;
+    const completedSubmissions = submissions.filter((s: any) => s.status !== 'PENDING').length;
     const assignmentCompletion =
       submissions.length > 0 ? completedSubmissions / submissions.length : 1;
 
     const moodMap = { VERY_LOW: 1, LOW: 2, NEUTRAL: 3, GOOD: 4, EXCELLENT: 5 };
     const recentMoodAvg =
       moods.length > 0
-        ? moods.reduce((sum, m) => sum + moodMap[m.moodLevel], 0) / moods.length
+        ? moods.reduce((sum: number, m: any) => sum + moodMap[m.moodLevel as keyof typeof moodMap], 0) / moods.length
         : 3;
 
     return { studentId, attendanceRate, averageGrade, assignmentCompletion, recentMoodAvg };

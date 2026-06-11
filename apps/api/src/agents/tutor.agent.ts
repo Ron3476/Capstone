@@ -19,8 +19,8 @@ export class TutorAgent {
 
     if (!student) throw new Error('Student not found');
 
-    const subjects = student.enrollments.flatMap((e) =>
-      e.class.classSubjects.map((cs) => cs.subject.name)
+    const subjects = student.enrollments.flatMap((e: any) =>
+      e.class.classSubjects.map((cs: any) => cs.subject.name)
     );
 
     const prompt = `Create a personalized weekly study plan for a Kenyan student (Grade ${student.gradeLevel}) studying ${student.user.firstName}.
