@@ -108,7 +108,7 @@ router.post('/quiz', authorize('TEACHER'), async (req: AuthRequest, res, next) =
 
 router.post('/risk-analysis/:studentId', authorize('TEACHER', 'ADMIN', 'COUNSELOR'), async (req, res, next) => {
   try {
-    const decisions = await aiService.analyzeStudentRisk(req.params.studentId);
+    const decisions = await aiService.analyzeStudentRisk(req.params.studentId as string);
     res.json({ success: true, data: decisions });
   } catch (err) {
     next(err);
@@ -117,7 +117,7 @@ router.post('/risk-analysis/:studentId', authorize('TEACHER', 'ADMIN', 'COUNSELO
 
 router.post('/pipeline/:studentId', authorize('TEACHER', 'ADMIN'), async (req, res, next) => {
   try {
-    const result = await aiService.runFullPipeline(req.params.studentId);
+    const result = await aiService.runFullPipeline(req.params.studentId as string);
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);
@@ -129,7 +129,7 @@ router.post('/parent-report/:studentId', authorize('PARENT'), async (req: AuthRe
     const parent = await prisma.parent.findUnique({ where: { userId: req.user!.userId } });
     if (!parent) return res.status(404).json({ success: false, error: 'Parent profile not found' });
 
-    const report = await aiService.generateParentReport(parent.id, req.params.studentId);
+    const report = await aiService.generateParentReport(parent.id, req.params.studentId as string);
     res.json({ success: true, data: report });
   } catch (err) {
     next(err);
@@ -168,7 +168,7 @@ router.post('/recommendations/:id/review', authorize('TEACHER'), async (req: Aut
     if (!teacher) return res.status(404).json({ success: false, error: 'Teacher profile not found' });
 
     const decision = await teacherAgent.approveRecommendation(
-      req.params.id,
+      req.params.id as string,
       teacher.id,
       approved,
       reason

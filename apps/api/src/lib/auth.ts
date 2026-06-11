@@ -15,11 +15,11 @@ export async function comparePassword(password: string, hash: string): Promise<b
 }
 
 export function signAccessToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload as any, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN as any });
 }
 
 export function signRefreshToken(payload: Pick<JwtPayload, 'userId'>): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN });
+  return jwt.sign(payload as any, JWT_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN as any });
 }
 
 export function verifyToken(token: string): JwtPayload {

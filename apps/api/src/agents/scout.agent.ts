@@ -56,7 +56,7 @@ export class ScoutAgent {
           description: `Scout Agent detected elevated risk. Failure: ${(failureRisk * 100).toFixed(0)}%, Dropout: ${(dropoutRisk * 100).toFixed(0)}%`,
           priority: riskLevel,
           status: 'PENDING',
-          metadata: { failureRisk, dropoutRisk, metrics },
+          metadata: { failureRisk, dropoutRisk, metrics } as any,
         },
       });
     }

@@ -78,7 +78,7 @@ router.patch('/:id/status', async (req: AuthRequest, res, next) => {
     const { isActive } = z.object({ isActive: z.boolean() }).parse(req.body);
 
     const user = await prisma.user.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { isActive },
     });
 

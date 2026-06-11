@@ -55,7 +55,7 @@ router.post('/', async (req: AuthRequest, res, next) => {
 router.patch('/:id/read', async (req: AuthRequest, res, next) => {
   try {
     const message = await prisma.message.update({
-      where: { id: req.params.id, receiverId: req.user!.userId },
+      where: { id: req.params.id as string, receiverId: req.user!.userId },
       data: { isRead: true },
     });
 

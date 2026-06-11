@@ -81,12 +81,12 @@ router.post('/:id/submit', authorize('STUDENT'), async (req: AuthRequest, res, n
     const submission = await prisma.assignmentSubmission.upsert({
       where: {
         assignmentId_studentId: {
-          assignmentId: req.params.id,
+          assignmentId: req.params.id as string,
           studentId: student.id,
         },
       },
       create: {
-        assignmentId: req.params.id,
+        assignmentId: req.params.id as string,
         studentId: student.id,
         content,
         fileUrl,
@@ -115,7 +115,7 @@ router.post('/submissions/:id/grade', authorize('TEACHER'), async (req: AuthRequ
     }).parse(req.body);
 
     const submission = await prisma.assignmentSubmission.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: { assignment: true },
     });
 
@@ -127,7 +127,7 @@ router.post('/submissions/:id/grade', authorize('TEACHER'), async (req: AuthRequ
         submissionId: submission.id,
         studentId: submission.studentId,
         score,
-        maxScore: submission.assignment.maxScore,
+        maxScore: (submission as any).assignment.maxScore,
         feedback,
         gradedBy: req.user!.userId,
       },

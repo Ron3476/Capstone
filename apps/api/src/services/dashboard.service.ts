@@ -97,14 +97,14 @@ export class DashboardService {
     });
 
     const totalStudents = new Set(
-      classSubjects.flatMap((cs) => cs.class.enrollments.map((e) => e.studentId))
+      classSubjects.flatMap((cs: any) => cs.class.enrollments.map((e: any) => e.studentId))
     ).size;
 
     const pendingGrading = classSubjects.reduce(
-      (sum, cs) =>
+      (sum: number, cs: any) =>
         sum +
         cs.assignments.reduce(
-          (a, asn) => a + asn.submissions.filter((s) => s.status === 'SUBMITTED').length,
+          (a: number, asn: any) => a + asn.submissions.filter((s: any) => s.status === 'SUBMITTED').length,
           0
         ),
       0
